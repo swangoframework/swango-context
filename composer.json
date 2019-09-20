@@ -14,11 +14,11 @@
 			"src/SysContext.php",
 			"src/Json.php",
 			"src/JsonDecodeFailException.php",
-			"src/XString.php",
 			"src/FinishFunc.php",
 			"src/FileLog.php"
 		],
 		"files" : [
+			"src/XString.php",
 			"src/Sort.php",
 			"src/Time.php"
 		]
