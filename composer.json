@@ -1,0 +1,22 @@
+{
+	"name" : "swango/context",
+	"license" : "Apache-2.0",
+	"keywords" : [
+		"php",
+		"swoole",
+		"context"
+	],
+	"require" : {
+		"php" : ">=7.1"
+	},
+	"autoload" : {
+		"classmap" : [
+			"src/Context.php",
+			"src/SysContext.php"
+		]
+	},
+	"config" : {
+		"optimize-autoloader" : true,
+		"sort-packages" : true
+	}
+}
