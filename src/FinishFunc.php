@@ -1,7 +1,7 @@
 <?php
 class FinishFunc {
     public static function register(callable $callback, ...$parameter): void {
-        if (defined('WORKING_MODE') && defined('WORKING_MODE_SWOOLE_COR') && WORKING_MODE === WORKING_MODE_SWOOLE_COR)
+        if (\Swoole\Coroutine::getCid() !== -1)
             \Swoole\Coroutine::defer(
                 [
                     new self($callback, ...$parameter),
