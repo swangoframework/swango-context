@@ -10,7 +10,7 @@ class FileLog {
         ], [
             '',
             '<=='
-        ], $e->getFile() . "({$e->getLine()}))\n{$e->getTraceAsString()}") . "\n";
+        ], $e->getMessage() . ' ' . $e->getFile() . "({$e->getLine()}))\n{$e->getTraceAsString()}") . "\n";
         $fp = fopen($dir . date('Y-m-d') . '.log', 'a');
         fwrite($fp, $s);
         fclose($fp);
