@@ -13,7 +13,7 @@ class Context {
     public static function &get(string $key) {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            $ob = $context->{static::CONTEXT_KEY};
+            $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
                 return $ob->{$key};
             }
@@ -24,7 +24,7 @@ class Context {
     public static function getAndDelete(string $key) {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            $ob = $context->{static::CONTEXT_KEY};
+            $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
                 $ret = $ob->{$key};
                 unset($ob->{$key});
@@ -36,7 +36,7 @@ class Context {
     public static function hGet(string $key, string $hash_key) {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            $ob = $context->{static::CONTEXT_KEY};
+            $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
                 $arr = $ob->{$key};
                 if (is_array($arr) && array_key_exists($hash_key, $arr))
@@ -47,12 +47,13 @@ class Context {
     }
     public static function has(string $key): bool {
         $context = Coroutine::getContext();
-        return $context->offsetExists(static::CONTEXT_KEY) && property_exists($context->{static::CONTEXT_KEY}, $key);
+        return $context->offsetExists(static::CONTEXT_KEY) &&
+             property_exists($context->offsetGet(static::CONTEXT_KEY), $key);
     }
     public static function hHas(string $key, string $hash_key): bool {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            $ob = $context->{static::CONTEXT_KEY};
+            $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
                 $arr = $ob->{$key};
                 if (is_array($arr) && array_key_exists($hash_key, $arr))
@@ -64,19 +65,19 @@ class Context {
     public static function set(string $key, $value): void {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            $context->{static::CONTEXT_KEY}->{$key} = $value;
+            $context->offsetGet(static::CONTEXT_KEY)->{$key} = $value;
         } else {
             $ob = new \stdClass();
             $ob->{$key} = $value;
-            $context->{static::CONTEXT_KEY} = $ob;
-            if (! property_exists($context, self::CONTEXT_KEY))
-                $context->{self::CONTEXT_KEY} = new self();
+            $context->offsetSet(static::CONTEXT_KEY, $ob);
+            if (! $context->offsetExists(static::CONTEXT_COUNTER_KEY))
+                $context->offsetSet(static::CONTEXT_COUNTER_KEY, new self());
         }
     }
     public static function hSet(string $key, string $hash_key, $value): void {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            $ob = $context->{static::CONTEXT_KEY};
+            $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
                 $arr = &$ob->{$key};
                 if (is_array($arr)) {
@@ -96,15 +97,15 @@ class Context {
             $ob->{$key} = [
                 $hash_key => $value
             ];
-            $context->{static::CONTEXT_KEY} = $ob;
-            if (! property_exists($context, self::CONTEXT_KEY))
-                $context->{self::CONTEXT_KEY} = new self();
+            $context->offsetSet(static::CONTEXT_KEY, $ob);
+            if (! $context->offsetExists(static::CONTEXT_COUNTER_KEY))
+                $context->offsetSet(static::CONTEXT_COUNTER_KEY, new self());
         }
     }
     public static function push(string $key, $value): void {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            $ob = $context->{static::CONTEXT_KEY};
+            $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
                 $arr = &$ob->{$key};
                 if (is_array($arr)) {
@@ -124,15 +125,15 @@ class Context {
             $ob->{$key} = [
                 $value
             ];
-            $context->{static::CONTEXT_KEY} = $ob;
-            if (! property_exists($context, self::CONTEXT_KEY))
-                $context->{self::CONTEXT_KEY} = new self();
+            $context->offsetSet(static::CONTEXT_KEY, $ob);
+            if (! $context->offsetExists(static::CONTEXT_COUNTER_KEY))
+                $context->offsetSet(static::CONTEXT_COUNTER_KEY, new self());
         }
     }
     public static function del(string $key): bool {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            $ob = $context->{static::CONTEXT_KEY};
+            $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
                 unset($ob->{$key});
                 return true;
@@ -143,7 +144,7 @@ class Context {
     public static function hDel(string $key, string $hash_key): bool {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            $ob = $context->{static::CONTEXT_KEY};
+            $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
                 $arr = &$ob->{$key};
                 if (is_array($arr) && array_key_exists($hash_key, $arr)) {
@@ -157,7 +158,7 @@ class Context {
     public static function clear(?int $uid = null): bool {
         $context = Coroutine::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
-            unset($context->{static::CONTEXT_KEY});
+            $context->offsetUnset(static::CONTEXT_KEY);
             return true;
         }
         return false;
