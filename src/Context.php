@@ -1,7 +1,7 @@
 <?php
 use Swoole\Coroutine;
 class Context {
-    final const CONTEXT_COUNTER_KEY = 'c';
+    const CONTEXT_COUNTER_KEY = 'c';
     const CONTEXT_KEY = 'a';
     private static $size = 0;
     private function __construct() {
