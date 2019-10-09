@@ -6,10 +6,17 @@
 		"swoole"
 	],
 	"require" : {
-		"php" : ">=7.1"
+		"php" : ">=7.1",
+		"swlib/saber" : "^1.0",
+		"zendframework/zend-http" : "^2.10"
 	},
 	"autoload" : {
+		"psr-4" : {
+			"ApiErrorException\\" : "src/ApiErrorException"
+		},
 		"classmap" : [
+			"src/ApiErrorException.php",
+			"src/BaseClient.php",
 			"src/Context.php",
 			"src/SysContext.php",
 			"src/Json.php",
