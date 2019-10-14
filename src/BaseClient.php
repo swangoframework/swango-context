@@ -176,7 +176,7 @@ abstract class BaseClient {
         return $dir;
     }
     protected function writeLog(string &$log_string): void {
-        if (WORKING_MODE === WORKING_MODE_CLI) {
+        if (\Swango\Environment::getWorkingMode()->isInCliScript()) {
             if (strlen($log_string) > 4096)
                 echo substr($log_string, 0, 4096) . "\n\n";
             else
@@ -190,7 +190,7 @@ abstract class BaseClient {
         fclose($fp);
     }
     protected function parseRequest(&$post, &$get, &$header, ?string $request_string = null) {
-        if (defined('WORKING_MODE') && defined('WORKING_MODE_SWOOLE_COR') && WORKING_MODE === WORKING_MODE_SWOOLE_COR) {
+        if (\Swango\Environment::getWorkingMode()->isInSwooleWorker() && class_exists('\\HttpServer\\Router')) {
             $swoole_request = \Controller::getInstance()->getSwooleHttpRequest();
             if (\HttpServer\Router::getInstance()->getMethod() === 'POST') {
                 if (static::PARSE_POST === self::PARSE_MODE_URL_ENCODE_KV)
