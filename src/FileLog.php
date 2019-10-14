@@ -5,7 +5,7 @@ class FileLog {
             mkdir($dir);
         $s = sprintf('[%s] %s: ', date('Y-m-d H:i:s', time()), $title);
         $s .= str_replace([
-            BASEDIR,
+            \Swango\Environment::getDir()->base,
             "\n"
         ], [
             '',

@@ -1,8 +1,8 @@
 <?php
 class FinishFunc {
     public static function register(callable $callback, ...$parameter): void {
-        if (\Swoole\Coroutine::getCid() !== -1)
-            \Swoole\Coroutine::defer(
+        if (Swango\Environment::getWorkingMode()->isInSwooleCoroutine())
+            Swoole\Coroutine::defer(
                 [
                     new self($callback, ...$parameter),
                     'exec'
@@ -21,7 +21,7 @@ class FinishFunc {
         } catch(\Throwable $e) {
             $this->callback = null;
             $this->parameter = null;
-            FileLog::logThrowable($e, LOGDIR . 'error/', 'FinishFunc');
+            FileLog::logThrowable($e, \Swango\Environment::getDir()->log . 'error/', 'FinishFunc');
         }
     }
 }

@@ -69,7 +69,7 @@ abstract class BaseClient {
         } elseif (array_key_exists($class_name, self::$exception_name_map)) {
             $this->exception_name = self::$exception_name_map[$class_name];
         } else {
-            $dir = LIBDIR . str_replace('\\', '/', $class_name);
+            $dir = \Swango\Environment::getDir()->library . str_replace('\\', '/', $class_name);
             $timeout = $unknown = $error = null;
             do {
                 if (! isset($timeout) && file_exists($dir . '/Exception/ApiTimeoutException.php'))
@@ -170,9 +170,9 @@ abstract class BaseClient {
     protected function getLogDir(): string {
         $class_name = static::class;
         if (strpos($class_name, 'class@anonymous') !== false)
-            $dir = LOGDIR . 'http_client/anonymous/' . $this->client->getUri()->getHost();
+            $dir = \Swango\Environment::getDir()->log . 'http_client/anonymous/' . $this->client->getUri()->getHost();
         else
-            $dir = LOGDIR . 'http_client/' . str_replace('\\', '/', $class_name);
+            $dir = \Swango\Environment::getDir()->log . 'http_client/' . str_replace('\\', '/', $class_name);
         return $dir;
     }
     protected function writeLog(string &$log_string): void {
