@@ -190,9 +190,9 @@ abstract class BaseClient {
         fclose($fp);
     }
     protected function parseRequest(&$post, &$get, &$header, ?string $request_string = null) {
-        if (\Swango\Environment::getWorkingMode()->isInSwooleWorker() && class_exists('\\HttpServer\\Router')) {
-            $swoole_request = \Controller::getInstance()->getSwooleHttpRequest();
-            if (\HttpServer\Router::getInstance()->getMethod() === 'POST') {
+        if (\Swango\Environment::getWorkingMode()->isInSwooleWorker() && class_exists('\\Swango\\HttpServer\\Router')) {
+            $swoole_request = \Swango\HttpServer\Controller::getInstance()->getSwooleHttpRequest();
+            if (\Swango\HttpServer\Router::getInstance()->getMethod() === 'POST') {
                 if (static::PARSE_POST === self::PARSE_MODE_URL_ENCODE_KV)
                     $post = $swoole_request->post;
                 elseif (static::PARSE_POST === self::PARSE_MODE_JSON)
