@@ -17,6 +17,40 @@ abstract class BaseClient {
             return $this->{'handleErrorCode_' . $code}();
         return false;
     }
+    protected function getExceptionName(): array {
+        $class_name = static::class;
+        $dir = \Swango\Environment::getDir()->library . str_replace('\\', '/', $class_name);
+        $timeout = $unknown = $error = null;
+        do {
+            if (! isset($timeout) && file_exists($dir . '/Exception/ApiTimeoutException.php'))
+                $timeout = $class_name . '\\Exception\\ApiTimeoutException';
+
+            if (! isset($unknown) && file_exists($dir . '/Exception/UnknownResultException.php'))
+                $unknown = $class_name . '\\Exception\\UnknownResultException';
+
+            if (! isset($error) && file_exists($dir . '/Exception/ApiErrorException.php'))
+                $error = $class_name . '\\Exception\\ApiErrorException';
+
+            if ((isset($timeout) && isset($error)) && isset($unknown))
+                break;
+            $pos = strrpos($class_name, '\\');
+            if ($pos === false)
+                break;
+            $class_name = substr($class_name, 0, $pos);
+            $dir = substr($dir, 0, strrpos($dir, '/'));
+        } while ( $class_name && $class_name != '\\' );
+        if (! isset($timeout))
+            $timeout = 'ApiErrorException\\ApiTimeoutException';
+        if (! isset($unknown))
+            $unknown = 'ApiErrorException\\UnknownResultException';
+        if (! isset($error))
+            $error = 'ApiErrorException';
+        return [
+            'timeout' => '\\' . $timeout,
+            'unknown' => '\\' . $unknown,
+            'error' => '\\' . $error
+        ];
+    }
     /**
      * 发包之前的准备，在调用此方法后setData addHeader之类的方法将不生效
      *
@@ -69,38 +103,7 @@ abstract class BaseClient {
         } elseif (array_key_exists($class_name, self::$exception_name_map)) {
             $this->exception_name = self::$exception_name_map[$class_name];
         } else {
-            $dir = \Swango\Environment::getDir()->library . str_replace('\\', '/', $class_name);
-            $timeout = $unknown = $error = null;
-            do {
-                if (! isset($timeout) && file_exists($dir . '/Exception/ApiTimeoutException.php'))
-                    $timeout = $class_name . '\\Exception\\ApiTimeoutException';
-
-                if (! isset($unknown) && file_exists($dir . '/Exception/UnknownResultException.php'))
-                    $unknown = $class_name . '\\Exception\\UnknownResultException';
-
-                if (! isset($error) && file_exists($dir . '/Exception/ApiErrorException.php'))
-                    $error = $class_name . '\\Exception\\ApiErrorException';
-
-                if ((isset($timeout) && isset($error)) && isset($unknown))
-                    break;
-                $pos = strrpos($class_name, '\\');
-                if ($pos === false)
-                    break;
-                $class_name = substr($class_name, 0, $pos);
-                $dir = substr($dir, 0, strrpos($dir, '/'));
-            } while ( $class_name && $class_name != '\\' );
-            if (! isset($timeout))
-                $timeout = 'ApiErrorException\\ApiTimeoutException';
-            if (! isset($unknown))
-                $unknown = 'ApiErrorException\\UnknownResultException';
-            if (! isset($error))
-                $error = 'ApiErrorException';
-            $this->exception_name = [
-                'timeout' => '\\' . $timeout,
-                'unknown' => '\\' . $unknown,
-                'error' => '\\' . $error
-            ];
-            self::$exception_name_map[static::class] = $this->exception_name;
+            self::$exception_name_map[static::class] = $this->exception_name = $this->getExceptionName();
         }
         return $this;
     }
