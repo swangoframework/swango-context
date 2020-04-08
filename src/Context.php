@@ -3,15 +3,24 @@ use Swoole\Coroutine;
 class Context {
     const CONTEXT_COUNTER_KEY = 'c';
     const CONTEXT_KEY = 'a';
-    private static $size = 0;
+    private static $size = 0, $static_context;
     private function __construct() {
         ++ self::$size;
     }
     public function __destruct() {
         -- self::$size;
     }
-    public static function &get(string $key) {
+    private static function getContext() {
         $context = Coroutine::getContext();
+        if (! isset($context)) {
+            if (self::$static_context === null)
+                self::$static_context = new \ArrayObject();
+            return self::$static_context;
+        }
+        return $context;
+    }
+    public static function &get(string $key) {
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
@@ -22,7 +31,7 @@ class Context {
         return $t;
     }
     public static function getAndDelete(string $key) {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
@@ -34,7 +43,7 @@ class Context {
         return null;
     }
     public static function hGet(string $key, string $hash_key) {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
@@ -46,12 +55,12 @@ class Context {
         return null;
     }
     public static function has(string $key): bool {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         return $context->offsetExists(static::CONTEXT_KEY) &&
              property_exists($context->offsetGet(static::CONTEXT_KEY), $key);
     }
     public static function hHas(string $key, string $hash_key): bool {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
@@ -63,7 +72,7 @@ class Context {
         return false;
     }
     public static function set(string $key, $value): void {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $context->offsetGet(static::CONTEXT_KEY)->{$key} = $value;
         } else {
@@ -75,7 +84,7 @@ class Context {
         }
     }
     public static function hSet(string $key, string $hash_key, $value): void {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
@@ -103,7 +112,7 @@ class Context {
         }
     }
     public static function push(string $key, $value): void {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
@@ -131,7 +140,7 @@ class Context {
         }
     }
     public static function del(string $key): bool {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
@@ -142,7 +151,7 @@ class Context {
         return false;
     }
     public static function hDel(string $key, string $hash_key): bool {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $ob = $context->offsetGet(static::CONTEXT_KEY);
             if (property_exists($ob, $key)) {
@@ -156,7 +165,7 @@ class Context {
         return false;
     }
     public static function clear(?int $uid = null): bool {
-        $context = Coroutine::getContext();
+        $context = self::getContext();
         if ($context->offsetExists(static::CONTEXT_KEY)) {
             $context->offsetUnset(static::CONTEXT_KEY);
             return true;
