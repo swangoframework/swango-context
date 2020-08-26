@@ -6,10 +6,9 @@
 		"swoole"
 	],
 	"require" : {
-		"php": ">=7.1",
-		"swango/environment": "^1.0",
-		"swlib/saber": "^1.0",
-		"zendframework/zend-http": "^2.10"
+		"php" : ">=7.1",
+		"swango/environment" : "^1.0",
+		"swlib/saber" : "^1.0"
 	},
 	"autoload" : {
 		"psr-4" : {
@@ -23,7 +22,9 @@
 			"src/Json.php",
 			"src/JsonDecodeFailException.php",
 			"src/FinishFunc.php",
-			"src/FileLog.php"
+			"src/FileLog.php",
+			"src/Xml.php",
+			"src/XmlDecodeFailException.php"
 		],
 		"files" : [
 			"src/XString.php",

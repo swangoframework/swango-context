@@ -225,24 +225,80 @@ abstract class BaseClient {
         } else {
             if (! isset($request_string))
                 throw new \Exception('Need request string when not in fgi mode');
-            $request = \Zend\Http\Request::fromString(trim($request_string), false);
+            /**
+             *
+             * @var Swlib\Http\Request $request
+             */
+            $request = self::parseRequestString(trim($request_string));
             if ($request->getMethod() === 'POST') {
                 if (static::PARSE_POST === self::PARSE_MODE_URL_ENCODE_KV) {
                     $post = null;
-                    parse_str($request->getContent(), $post);
-                } elseif (static::PARSE_POST === self::PARSE_MODE_JSON)
-                    $post = \Json::decodeAsArray($request->getContent());
-                else
-                    $post = $request->getContent();
-            } else
+                    parse_str($request->getBody()->__toString(), $post);
+                } elseif (static::PARSE_POST === self::PARSE_MODE_JSON) {
+                    $post = Json::decodeAsArray($request->getBody()->__toString());
+                } else {
+                    $post = $request->getBody()->__toString();
+                }
+            } else {
                 $post = null;
+            }
 
-            if (static::PARSE_GET === self::PARSE_MODE_URL_ENCODE_KV)
-                $get = $request->getUri()->getQueryAsArray();
-            else
+            if (static::PARSE_GET === self::PARSE_MODE_URL_ENCODE_KV) {
+                $get = null;
+                parse_str($request->getUri()->getQuery(), $get);
+            } else {
                 $get = $request->getUri()->getQuery();
+            }
 
-            $header = $request->getHeaders()->toArray();
+            $header = $request->getHeaders(true, true);
         }
+    }
+    public static function parseRequestString(string $string): Swlib\Http\Request {
+        $lines = explode("\r\n", $string);
+
+        // first line must be Method/Uri/Version string
+        $matches = null;
+        $regex = '#^(?P<method>[\w-]+)\s(?P<uri>[^ ]*)(?:\sHTTP\/(?P<version>\d+\.\d+)){0,1}#';
+        $firstLine = array_shift($lines);
+        if (! preg_match($regex, $firstLine, $matches)) {
+            throw new Exception('A valid request line was not found in the provided string');
+        }
+
+        $request = new Swlib\Http\Request($matches['method'], $matches['uri'], [], null, $matches['version']);
+
+        if (! empty($lines)) {
+            $isHeader = true;
+            $rawBody = [];
+            while ( $lines ) {
+                $nextLine = array_shift($lines);
+                if ($nextLine == '') {
+                    $isHeader = false;
+                    continue;
+                }
+
+                if ($isHeader) {
+                    if (preg_match("/[\r\n]/", $nextLine)) {
+                        throw new Exception('CRLF injection detected');
+                    }
+
+                    $pos = strpos($nextLine, ':');
+                    $raw_name = trim(substr($nextLine, 0, $pos));
+                    $value = trim(substr($nextLine, $pos + 1));
+                    $request->withHeader($raw_name, $value);
+                    continue;
+                }
+
+                if (empty($rawBody) && preg_match('/^[a-z0-9!#$%&\'*+.^_`|~-]+:$/i', $nextLine)) {
+                    throw new Exception('CRLF injection detected');
+                }
+
+                $rawBody[] = $nextLine;
+            }
+
+            if (! empty($rawBody))
+                $request->withBody(Swlib\Http\stream_for(implode("\r\n", $rawBody)));
+        }
+
+        return $request;
     }
 }
