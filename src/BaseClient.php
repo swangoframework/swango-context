@@ -13,8 +13,9 @@ abstract class BaseClient {
     private $exception_name, $send_time;
     protected $request_sent = false, $request_no_need_send = false;
     protected function handleHttpErrorCode(int $code): bool {
-        if (method_exists($this, 'handleErrorCode_' . $code))
+        if (method_exists($this, 'handleErrorCode_' . $code)) {
             return $this->{'handleErrorCode_' . $code}();
+        }
         return false;
     }
     protected function getExceptionName(): array {
@@ -22,29 +23,34 @@ abstract class BaseClient {
         $dir = \Swango\Environment::getDir()->library . str_replace('\\', '/', $class_name);
         $timeout = $unknown = $error = null;
         do {
-            if (! isset($timeout) && file_exists($dir . '/Exception/ApiTimeoutException.php'))
+            if (! isset($timeout) && file_exists($dir . '/Exception/ApiTimeoutException.php')) {
                 $timeout = $class_name . '\\Exception\\ApiTimeoutException';
-
-            if (! isset($unknown) && file_exists($dir . '/Exception/UnknownResultException.php'))
+            }
+            if (! isset($unknown) && file_exists($dir . '/Exception/UnknownResultException.php')) {
                 $unknown = $class_name . '\\Exception\\UnknownResultException';
-
-            if (! isset($error) && file_exists($dir . '/Exception/ApiErrorException.php'))
+            }
+            if (! isset($error) && file_exists($dir . '/Exception/ApiErrorException.php')) {
                 $error = $class_name . '\\Exception\\ApiErrorException';
-
-            if ((isset($timeout) && isset($error)) && isset($unknown))
+            }
+            if ((isset($timeout) && isset($error)) && isset($unknown)) {
                 break;
+            }
             $pos = strrpos($class_name, '\\');
-            if ($pos === false)
+            if ($pos === false) {
                 break;
+            }
             $class_name = substr($class_name, 0, $pos);
             $dir = substr($dir, 0, strrpos($dir, '/'));
-        } while ( $class_name && $class_name != '\\' );
-        if (! isset($timeout))
+        } while ($class_name && $class_name != '\\');
+        if (! isset($timeout)) {
             $timeout = 'ApiErrorException\\ApiTimeoutException';
-        if (! isset($unknown))
+        }
+        if (! isset($unknown)) {
             $unknown = 'ApiErrorException\\UnknownResultException';
-        if (! isset($error))
+        }
+        if (! isset($error)) {
             $error = 'ApiErrorException';
+        }
         return [
             'timeout' => '\\' . $timeout,
             'unknown' => '\\' . $unknown,
@@ -66,32 +72,31 @@ abstract class BaseClient {
         if (! isset($uri)) {
             $uri = new \Swlib\Http\Uri();
             $uri->withScheme(static::SCHEME);
-            if (static::HOST !== null)
+            if (static::HOST !== null) {
                 $uri->withHost(static::HOST);
-            if (static::PORT !== null)
+            }
+            if (static::PORT !== null) {
                 $port = static::PORT;
-            elseif (static::SCHEME === 'https')
+            } elseif (static::SCHEME === 'https') {
                 $port = 443;
-            else
+            } else {
                 $port = 80;
+            }
             $uri->withPort($port);
-            if (static::PATH !== null)
+            if (static::PATH !== null) {
                 $uri->withPath(static::PATH);
+            }
         }
-
-        $client = \Swlib\SaberGM::psr(
-            [
-                'use_pool' => static::USE_POOL,
-                'method' => static::METHOD,
-                'useragent' => 'MangoHttpClient/3.0.0 (CentOS 7; Cor)',
-                'timeout' => static::TIMEOUT,
-                'keep_alive' => static::KEEP_ALIVE,
-                'uri' => $uri,
-                'exception_report' => Swlib\Http\Exception\HttpExceptionMask::E_CONNECT
-            ]);
-
+        $client = \Swlib\SaberGM::psr([
+            'use_pool' => static::USE_POOL,
+            'method' => static::METHOD,
+            'useragent' => 'MangoHttpClient/3.0.0 (CentOS 7; Cor)',
+            'timeout' => static::TIMEOUT,
+            'keep_alive' => static::KEEP_ALIVE,
+            'uri' => $uri,
+            'exception_report' => Swlib\Http\Exception\HttpExceptionMask::E_CONNECT
+        ]);
         $this->client = $client;
-
         // 构建对应的exception_name，并注册
         $class_name = static::class;
         if (strpos($class_name, 'class@anonymous') !== false) {
@@ -113,12 +118,15 @@ abstract class BaseClient {
      * @return self
      */
     public function sendHttpRequest(): self {
-        if ($this->request_no_need_send)
+        if ($this->request_no_need_send) {
             return $this;
-        if ($this->request_sent)
+        }
+        if ($this->request_sent) {
             throw new \Exception('Request already sent');
-        if (! isset($this->client))
+        }
+        if (! isset($this->client)) {
             $this->makeClient();
+        }
         $this->send_time = \Time\now();
         $this->client->exec();
         $this->request_sent = true;
@@ -128,32 +136,32 @@ abstract class BaseClient {
         return $this->request_sent;
     }
     protected function recv(): \Swlib\Saber\Response {
-        if (! $this->request_sent)
+        if (! $this->request_sent) {
             throw new \Exception('Request not sent');
+        }
         $client = $this->client;
         $log_string = date('[Y-m-d H:i:s] ', $this->send_time) . "----------Request----------\n";
         $log_string .= $client->__toString() . "\n";
         try {
             $response = $client->recv();
             $code = $response->statusCode;
-
             $log_string .= date('[Y-m-d H:i:s] ', \Time\now()) . "----------Response---------\n";
             $log_string .= $response->__toString() . "\n\n";
             $this->writeLog($log_string);
-
             if ($code !== 200 && ! $this->handleHttpErrorCode($code)) {
                 $name = $this->exception_name['error'];
-                if (! isset($name) || $name === '')
+                if (! isset($name) || $name === '') {
                     throw new \ApiErrorException(static::class . ' api code error :' . $code);
+                }
                 throw new $name(static::class . ' api code error :' . $code);
             }
             return $response;
-        } catch(\Swlib\Http\Exception\ConnectException $e) {
+        } catch (\Swlib\Http\Exception\ConnectException $e) {
             $code = $e->getCode();
             $error = $e->getMessage();
             $log_string .= "----Response:$error----\n\n";
             $this->writeLog($log_string);
-            if ($code === - 1 || $code === - 2) {
+            if ($code === -1 || $code === -2) {
                 $name = $this->exception_name['timeout'];
                 if (isset($name)) {
                     throw new $name(static::class . $error);
@@ -172,22 +180,25 @@ abstract class BaseClient {
     }
     protected function getLogDir(): string {
         $class_name = static::class;
-        if (strpos($class_name, 'class@anonymous') !== false)
+        if (strpos($class_name, 'class@anonymous') !== false) {
             $dir = \Swango\Environment::getDir()->log . 'http_client/anonymous/' . $this->client->getUri()->getHost();
-        else
+        } else {
             $dir = \Swango\Environment::getDir()->log . 'http_client/' . str_replace('\\', '/', $class_name);
+        }
         return $dir;
     }
     protected function writeLog(string &$log_string): void {
         if (\Swango\Environment::getWorkingMode()->isInCliScript()) {
-            if (strlen($log_string) > 4096)
+            if (strlen($log_string) > 4096) {
                 echo substr($log_string, 0, 4096) . "\n\n";
-            else
+            } else {
                 echo $log_string;
+            }
         }
         $dir = $this->getLogDir();
-        if (! is_dir($dir))
+        if (! is_dir($dir)) {
             mkdir($dir, 0777, true);
+        }
         $fp = fopen($dir . '/' . date('Y-m-d') . '.log', 'a');
         fwrite($fp, $log_string);
         fclose($fp);
@@ -196,22 +207,25 @@ abstract class BaseClient {
         if (\Swango\Environment::getWorkingMode()->isInSwooleWorker() && class_exists('\\Swango\\HttpServer\\Router')) {
             $swoole_request = \Swango\HttpServer\Controller::getInstance()->getSwooleHttpRequest();
             if (\Swango\HttpServer\Router::getInstance()->getMethod() === 'POST') {
-                if (static::PARSE_POST === self::PARSE_MODE_URL_ENCODE_KV)
-                    $post = $swoole_request->post;
-                elseif (static::PARSE_POST === self::PARSE_MODE_JSON)
+                if (static::PARSE_POST === self::PARSE_MODE_URL_ENCODE_KV) {
+                    $post = null;
+                    parse_str($swoole_request->rawContent(), $post);
+                } elseif (static::PARSE_POST === self::PARSE_MODE_JSON) {
                     $post = \Json::decodeAsArray($swoole_request->rawContent());
-                else
+                } else {
                     $post = $swoole_request->rawContent();
-            } else
+                }
+            } else {
                 $post = null;
-
-            if (static::PARSE_GET === self::PARSE_MODE_URL_ENCODE_KV)
-                $get = $swoole_request->get;
-            else
+            }
+            if (static::PARSE_GET === self::PARSE_MODE_URL_ENCODE_KV) {
+                $get = null;
+                parse_str($swoole_request->server['query_string'], $get);
+            } else {
                 $get = $swoole_request->server['query_string'];
-
+            }
             $header = [];
-            foreach ($swoole_request->header as $key=>&$value) {
+            foreach ($swoole_request->header as $key => &$value) {
                 $key_parts = explode('-', $key);
                 foreach ($key_parts as &$p)
                     $p = ucfirst($p);
@@ -223,8 +237,9 @@ abstract class BaseClient {
             $log_string .= $swoole_request->getData() . "\n";
             $this->writeLog($log_string);
         } else {
-            if (! isset($request_string))
+            if (! isset($request_string)) {
                 throw new \Exception('Need request string when not in fgi mode');
+            }
             /**
              *
              * @var Swlib\Http\Request $request
@@ -242,20 +257,17 @@ abstract class BaseClient {
             } else {
                 $post = null;
             }
-
             if (static::PARSE_GET === self::PARSE_MODE_URL_ENCODE_KV) {
                 $get = null;
                 parse_str($request->getUri()->getQuery(), $get);
             } else {
                 $get = $request->getUri()->getQuery();
             }
-
             $header = $request->getHeaders(true, true);
         }
     }
     public static function parseRequestString(string $string): Swlib\Http\Request {
         $lines = explode("\r\n", $string);
-
         // first line must be Method/Uri/Version string
         $matches = null;
         $regex = '#^(?P<method>[\w-]+)\s(?P<uri>[^ ]*)(?:\sHTTP\/(?P<version>\d+\.\d+)){0,1}#';
@@ -263,42 +275,35 @@ abstract class BaseClient {
         if (! preg_match($regex, $firstLine, $matches)) {
             throw new Exception('A valid request line was not found in the provided string');
         }
-
         $request = new Swlib\Http\Request($matches['method'], $matches['uri'], [], null, $matches['version']);
-
         if (! empty($lines)) {
             $isHeader = true;
             $rawBody = [];
-            while ( $lines ) {
+            while ($lines) {
                 $nextLine = array_shift($lines);
                 if ($nextLine == '') {
                     $isHeader = false;
                     continue;
                 }
-
                 if ($isHeader) {
                     if (preg_match("/[\r\n]/", $nextLine)) {
                         throw new Exception('CRLF injection detected');
                     }
-
                     $pos = strpos($nextLine, ':');
                     $raw_name = trim(substr($nextLine, 0, $pos));
                     $value = trim(substr($nextLine, $pos + 1));
                     $request->withHeader($raw_name, $value);
                     continue;
                 }
-
                 if (empty($rawBody) && preg_match('/^[a-z0-9!#$%&\'*+.^_`|~-]+:$/i', $nextLine)) {
                     throw new Exception('CRLF injection detected');
                 }
-
                 $rawBody[] = $nextLine;
             }
-
-            if (! empty($rawBody))
+            if (! empty($rawBody)) {
                 $request->withBody(Swlib\Http\stream_for(implode("\r\n", $rawBody)));
+            }
         }
-
         return $request;
     }
 }
