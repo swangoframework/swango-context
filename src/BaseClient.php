@@ -208,8 +208,7 @@ abstract class BaseClient {
             $swoole_request = \Swango\HttpServer\Controller::getInstance()->getSwooleHttpRequest();
             if (\Swango\HttpServer\Router::getInstance()->getMethod() === 'POST') {
                 if (static::PARSE_POST === self::PARSE_MODE_URL_ENCODE_KV) {
-                    $post = null;
-                    parse_str($swoole_request->rawContent(), $post);
+                    $post = $swoole_request->post;
                 } elseif (static::PARSE_POST === self::PARSE_MODE_JSON) {
                     $post = \Json::decodeAsArray($swoole_request->rawContent());
                 } else {
@@ -219,8 +218,7 @@ abstract class BaseClient {
                 $post = null;
             }
             if (static::PARSE_GET === self::PARSE_MODE_URL_ENCODE_KV) {
-                $get = null;
-                parse_str($swoole_request->server['query_string'], $get);
+                $get = \SysContext::get('request_get');
             } else {
                 $get = $swoole_request->server['query_string'];
             }
