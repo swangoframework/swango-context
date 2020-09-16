@@ -4,6 +4,14 @@ abstract class BaseClient {
     protected const SCHEME = 'http', METHOD = 'POST', TIMEOUT = 20, VERIFY_SSL = false, KEEP_ALIVE = true, USE_POOL = true;
     protected const PARSE_MODE_URL_ENCODE_KV = 1, PARSE_MODE_JSON = 2, PARSE_MODE_RAW = 3; // 普通form格式，json格式，原文。 xml因为需要更多参数，请使用原文格式并在子类中解析
     protected const PARSE_POST = self::PARSE_MODE_URL_ENCODE_KV, PARSE_GET = self::PARSE_MODE_URL_ENCODE_KV;
+    private static $_echo_log_on = true;
+    /**
+     * BaseClient在cli模式下默认会输出请求响应内容到标准输出
+     * @param bool $on
+     */
+    public static function setEchoLog(bool $on = false): void {
+        self::$_echo_log_on = $on;
+    }
     /**
      *
      * @var \Swlib\Saber\Request
@@ -188,7 +196,7 @@ abstract class BaseClient {
         return $dir;
     }
     protected function writeLog(string &$log_string): void {
-        if (\Swango\Environment::getWorkingMode()->isInCliScript()) {
+        if (self::$_echo_log_on && \Swango\Environment::getWorkingMode()->isInCliScript()) {
             if (strlen($log_string) > 4096) {
                 echo substr($log_string, 0, 4096) . "\n\n";
             } else {
