@@ -32,7 +32,7 @@ function _qsort(\SplFixedArray $arr, int $bottom, int $top, callable $compare_fu
 }
 
 /**
- * 快排，默认从小到达排序。注意：会去掉数组的键值。能用sort等函数的话就不要调用本函数
+ * 快排，默认从小到大排序。注意：会去掉数组的键值。能用sort等函数的话就不要调用本函数
  *
  * @param array|SplFixedArray $arr
  * @param callable $compare_func
