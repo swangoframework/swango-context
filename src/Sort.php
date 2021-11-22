@@ -1,34 +1,38 @@
 <?php
-function _qsort(SplFixedArray $arr, int $l, int $r, callable $compare) {
-    $i = $l;
-    $j = $r;
-    $x = $arr[(int)(($i + $j) / 2)];
-    $t = null;
-    do {
-        while ($compare($arr[$i], $x))
-            ++$i;
-        while ($compare($x, $arr[$j]))
-            --$j;
-        if ($i <= $j) {
-            $t = $arr[$i];
-            $arr[$i] = $arr[$j];
-            $arr[$j] = $t;
-            ++$i;
-            --$j;
+function _qsort_partition(\SplFixedArray $arr, int $bottom, int $top, callable $compare_func): int {
+    $m = $arr[(int)(($bottom + $top) / 2)];
+    $l = $bottom - 1;
+    $r = $top + 1;
+
+    while (true) {
+        do {
+            $l++;
+        } while ($l <= $top && $compare_func($arr[$l], $m));
+
+        do {
+            $r--;
+        } while ($r >= $bottom && $compare_func($m, $arr[$r]));
+
+        if ($l >= $r) {
+            return $r;
         }
-    } while ($i <= $j);
-    unset($t);
-    unset($x);
-    if ($i < $r) {
-        _qsort($arr, $i, $r, $compare);
-    }
-    if ($l < $j) {
-        _qsort($arr, $l, $j, $compare);
+
+        $tmp = $arr[$r];
+        $arr[$r] = $arr[$l];
+        $arr[$l] = $tmp;
     }
 }
-;
+
+function _qsort(\SplFixedArray $arr, int $bottom, int $top, callable $compare_func): void {
+    if ($bottom < $top) {
+        $j = _qsort_partition($arr, $bottom, $top, $compare_func);
+        _qsort($arr, $bottom, $j, $compare_func);
+        _qsort($arr, $j + 1, $top, $compare_func);
+    }
+}
+
 /**
- * 快排，默认从小到达排序。注意：会去掉数组的键值。能用sort等函数的话就不要调用本函数
+ * 快排，默认从小到大排序。注意：会去掉数组的键值。能用sort等函数的话就不要调用本函数
  *
  * @param array|SplFixedArray $arr
  * @param callable $compare_func
