@@ -6,7 +6,7 @@
 		"swoole"
 	],
 	"require" : {
-		"php" : ">=7.1",
+		"php" : ">=8.0",
 		"swango/environment" : "^1.0",
 		"swlib/saber" : "^1.0"
 	},
@@ -28,7 +28,6 @@
 		],
 		"files" : [
 			"src/XString.php",
-			"src/Sort.php",
 			"src/Time.php"
 		]
 	},
