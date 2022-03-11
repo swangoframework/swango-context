@@ -4,8 +4,8 @@ class Json {
         return json_encode($valueToEncode,
             $encodeOptions ?? (JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP));
     }
-    public static function decodeAsArray($encodedValue): array {
-        $decoded = json_decode($encodedValue, true);
+    public static function decodeAsArray($encodedValue, int $flags = 0): array {
+        $decoded = json_decode($encodedValue, associative: true, flags: $flags);
         switch (json_last_error()) {
             case JSON_ERROR_NONE :
                 return $decoded;
@@ -19,8 +19,8 @@ class Json {
                 throw new JsonDecodeFailException('Decoding failed');
         }
     }
-    public static function decodeAsObject($encodedValue) {
-        $decoded = json_decode($encodedValue, false);
+    public static function decodeAsObject($encodedValue, int $flags = 0) {
+        $decoded = json_decode($encodedValue, associative: false, flags: $flags);
         switch (json_last_error()) {
             case JSON_ERROR_NONE :
                 return $decoded;

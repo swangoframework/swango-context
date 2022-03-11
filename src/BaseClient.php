@@ -98,7 +98,7 @@ abstract class BaseClient {
         $client = \Swlib\SaberGM::psr([
             'use_pool' => static::USE_POOL,
             'method' => static::METHOD,
-            'useragent' => 'MangoHttpClient/3.0.0 (CentOS 7; Cor)',
+            'useragent' => 'Swango/1.2',
             'timeout' => static::TIMEOUT,
             'keep_alive' => static::KEEP_ALIVE,
             'uri' => $uri,
@@ -216,7 +216,8 @@ abstract class BaseClient {
             $swoole_request = \Swango\HttpServer\Controller::getInstance()->getSwooleHttpRequest();
             if (\Swango\HttpServer\Router::getInstance()->getMethod() === 'POST') {
                 if (static::PARSE_POST === self::PARSE_MODE_URL_ENCODE_KV) {
-                    $post = $swoole_request->post;
+                    $post = null;
+                    parse_str($swoole_request->rawContent(), $post);
                 } elseif (static::PARSE_POST === self::PARSE_MODE_JSON) {
                     $post = \Json::decodeAsArray($swoole_request->rawContent());
                 } else {
@@ -240,7 +241,7 @@ abstract class BaseClient {
             }
             unset($value);
             $log_string = date('[Y-m-d H:i:s] ', \Time\now()) . "----------Webhook----------\n";
-            $log_string .= $swoole_request->getData() . "\n";
+            $log_string .= $swoole_request->getData() . "\n\n";
             $this->writeLog($log_string);
         } else {
             if (! isset($request_string)) {
