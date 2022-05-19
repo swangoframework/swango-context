@@ -57,18 +57,11 @@ class Xml {
         $ret->{$name} = self::intoObject($xml, $need_array, $name);
         return $ret;
     }
-    private static function toXml(&$data, \Psr\Http\Message\StreamInterface $result, string $outer_key,
+    private static function toXml(&$data,
+                                  \Psr\Http\Message\StreamInterface $result,
+                                  string $outer_key,
                                   ?int $level): void {
-        $is_fixed_array = true;
-        $i = 0;
-        foreach ($data as $key => &$val) {
-            if ($key !== $i) {
-                $is_fixed_array = false;
-                break;
-            }
-            ++$i;
-        }
-        unset($val);
+        $is_fixed_array = is_array($data) && array_is_list($data);
 
         if (! $is_fixed_array && '' !== $outer_key) {
             if ($level) {
@@ -80,6 +73,9 @@ class Xml {
             }
         }
         foreach ($data as $key => &$val) {
+            if ($val instanceof \BackedEnum) {
+                $val = $val->value;
+            }
             if (is_scalar($val)) {
                 if (isset($level)) {
                     $result->write(str_repeat('  ', $is_fixed_array ? $level : $level + 1));
@@ -97,8 +93,11 @@ class Xml {
                     $result->write("\n");
                 }
             } else {
-                self::toXml($val, $result, $is_fixed_array ? $outer_key : $key,
-                    isset($level) ? ($is_fixed_array ? $level : $level + 1) : null);
+                self::toXml($val,
+                    $result,
+                    $is_fixed_array ? $outer_key : $key,
+                    isset($level) ? ($is_fixed_array ? $level : $level + 1) : null
+                );
             }
         }
         if (! $is_fixed_array && '' !== $outer_key) {

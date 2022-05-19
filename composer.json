@@ -6,7 +6,7 @@
 		"swoole"
 	],
 	"require" : {
-		"php" : ">=8.0",
+		"php" : ">=8.1",
 		"swango/environment" : "^1.0",
 		"swlib/saber" : "^1.0"
 	},
