@@ -24,7 +24,8 @@
 			"src/FinishFunc.php",
 			"src/FileLog.php",
 			"src/Xml.php",
-			"src/XmlDecodeFailException.php"
+			"src/XmlDecodeFailException.php",
+			"src/trait/"
 		],
 		"files" : [
 			"src/XString.php",
