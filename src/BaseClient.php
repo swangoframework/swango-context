@@ -143,13 +143,16 @@ abstract class BaseClient {
     public function requestSent(): bool {
         return $this->request_sent;
     }
+    protected function getRequestLogContent(): string {
+        return $this->client->__toString();
+    }
     protected function recv(): \Swlib\Saber\Response {
         if (! $this->request_sent) {
             throw new \Exception('Request not sent');
         }
         $client = $this->client;
         $log_string = date('[Y-m-d H:i:s] ', $this->send_time) . "----------Request----------\n";
-        $log_string .= $client->__toString() . "\n";
+        $log_string .= $this->getRequestLogContent() . "\n";
         try {
             $response = $client->recv();
             $code = $response->statusCode;
