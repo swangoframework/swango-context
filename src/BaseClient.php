@@ -146,19 +146,27 @@ abstract class BaseClient {
     protected function getRequestLogContent(): string {
         return $this->client->__toString();
     }
+    protected function getResponseLogContent(Swlib\Saber\Response $response): string {
+        return $response->__toString();
+    }
     protected function recv(): \Swlib\Saber\Response {
         if (! $this->request_sent) {
             throw new \Exception('Request not sent');
         }
         $client = $this->client;
-        $log_string = date('[Y-m-d H:i:s] ', $this->send_time) . "----------Request----------\n";
-        $log_string .= $this->getRequestLogContent() . "\n";
+        $log_buffer = \Swlib\Http\stream_for('');
+        $log_buffer->write(date('[Y-m-d H:i:s] ', $this->send_time));
+        $log_buffer->write("----------Request----------\n");
+        $log_buffer->write($this->getRequestLogContent());
+        $log_buffer->write("\n");
         try {
             $response = $client->recv();
             $code = $response->statusCode;
-            $log_string .= date('[Y-m-d H:i:s] ', \Time\now()) . "----------Response---------\n";
-            $log_string .= $response->__toString() . "\n\n";
-            $this->writeLog($log_string);
+            $log_buffer->write(date('[Y-m-d H:i:s] ', \Time\now()));
+            $log_buffer->write("----------Response---------\n");
+            $log_buffer->write($this->getResponseLogContent($response));
+            $log_buffer->write("\n\n");
+            $this->writeLogWithStream($log_buffer);
             if ($code !== 200 && ! $this->handleHttpErrorCode($code)) {
                 $name = $this->exception_name['error'];
                 if (! isset($name) || $name === '') {
@@ -170,8 +178,9 @@ abstract class BaseClient {
         } catch (\Swlib\Http\Exception\ConnectException $e) {
             $code = $e->getCode();
             $error = $e->getMessage();
-            $log_string .= "----Response:$error----\n\n";
-            $this->writeLog($log_string);
+            $log_buffer->write(date('[Y-m-d H:i:s] ', \Time\now()));
+            $log_buffer->write("----Response:$error----\n\n");
+            $this->writeLogWithStream($log_buffer);
             if ($code === -1 || $code === -2) {
                 $name = $this->exception_name['timeout'];
                 if (isset($name)) {
@@ -197,6 +206,24 @@ abstract class BaseClient {
             $dir = \Swango\Environment::getDir()->log . 'http_client/' . str_replace('\\', '/', $class_name);
         }
         return $dir;
+    }
+    protected function writeLogWithStream(Psr\Http\Message\StreamInterface $log_stream): void {
+        $log_stream->seek(0);
+        $log_string = $log_stream->getContents();
+        if (self::$_echo_log_on && \Swango\Environment::getWorkingMode()->isInCliScript()) {
+            if (strlen($log_string) > 4096) {
+                echo substr($log_string, 0, 4096) . "\n\n";
+            } else {
+                echo $log_string;
+            }
+        }
+        $dir = $this->getLogDir();
+        if (! is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $fp = fopen($dir . '/' . date('Y-m-d') . '.log', 'a');
+        fwrite($fp, $log_string);
+        fclose($fp);
     }
     protected function writeLog(string &$log_string): void {
         if (self::$_echo_log_on && \Swango\Environment::getWorkingMode()->isInCliScript()) {
